@@ -1,0 +1,43 @@
+.App {
+  font-family: Arial, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+input[type="file"],
+input[type="text"] {
+  margin: 10px 0;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #ccc;
+}
+
+h1,
+h2 {
+  margin-bottom: 10px;
+}
+
+.chat-box {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.chat-box div {
+  margin-bottom: 20px;
+}
