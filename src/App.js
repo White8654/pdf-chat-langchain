@@ -10,10 +10,14 @@ import {
   Container,
   LinearProgress,
   Divider,
+  Grid,
+  IconButton,
 } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { styled } from "@mui/material/styles";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 // Styled components for improved design
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -41,33 +45,45 @@ const ChatHistoryBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
 }));
 
+const PdfBox = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: theme.spacing(1),
+  backgroundColor: theme.palette.grey[100],
+}));
+
 function App() {
-  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfFiles, setPdfFiles] = useState([]); // For handling multiple PDFs
   const [query, setQuery] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loading1, setLoading1] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploaded, setIsUploaded] = useState(false); // Track upload status
 
   const handleFileChange = (event) => {
-    setPdfFile(event.target.files[0]);
+    setPdfFiles(event.target.files);
   };
 
   const handleFileUpload = async () => {
-    if (!pdfFile) {
-      toast.error("Please upload a PDF file first.");
+    if (pdfFiles.length === 0) {
+      toast.error("Please upload PDF files first.");
       return;
     }
 
     const formData = new FormData();
-    formData.append("file", pdfFile);
+    for (let i = 0; i < pdfFiles.length; i++) {
+      formData.append("files", pdfFiles[i]); // Append multiple files
+    }
 
     try {
       setLoading(true);
       setUploadProgress(0);
 
       const response = await axios.post(
-        "https://dj4kw5-8000.csb.app/upload_pdf/",
+        "https://dj4kw5-8000.csb.app/upload_pdfs/", // Correct endpoint for multiple files
         formData,
         {
           headers: {
@@ -83,8 +99,9 @@ function App() {
       );
 
       toast.success(response.data.message);
+      setIsUploaded(true); // Mark as uploaded
     } catch (error) {
-      toast.error("Error uploading the PDF. Try again.");
+      toast.error("Error uploading the PDFs. Try again.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -112,11 +129,17 @@ function App() {
       setChatHistory((prev) => [...prev, chatResponse]);
       setQuery("");
     } catch (error) {
-      toast.error("Error querying the PDF.");
+      toast.error("Error querying the PDFs.");
       console.error(error);
     } finally {
       setLoading1(false);
     }
+  };
+
+  const handleRemoveFile = (fileName) => {
+    setPdfFiles((prevFiles) =>
+      Array.from(prevFiles).filter((file) => file.name !== fileName)
+    );
   };
 
   return (
@@ -127,19 +150,33 @@ function App() {
       </Typography>
 
       <StyledPaper elevation={3}>
-        <Typography variant="h6">Upload PDF</Typography>
-        <Box display="flex" alignItems="center" marginBottom={2}>
+        <Typography variant="h6">Upload PDFs</Typography>
+        <Box display="flex" alignItems="center" marginBottom={3}>
           <UploadButton variant="contained" component="label" color="primary">
-            Choose PDF
+            Choose PDFs
             <input
               type="file"
               accept="application/pdf"
               hidden
+              multiple // Allow multiple file selection
               onChange={handleFileChange}
             />
           </UploadButton>
-          {pdfFile && <Typography>{pdfFile.name}</Typography>}
         </Box>
+
+        {/* Display PDF Files in Grid */}
+        <Grid container spacing={2}>
+          {Array.from(pdfFiles).map((file) => (
+            <Grid item xs={12} key={file.name}>
+              <PdfBox>
+                <Box display="flex" alignItems="center">
+                  <PictureAsPdfIcon color="error" style={{ marginRight: 8 }} />
+                  <Typography variant="body1">{file.name}</Typography>
+                </Box>
+              </PdfBox>
+            </Grid>
+          ))}
+        </Grid>
 
         {uploadProgress > 0 && (
           <ProgressBox>
@@ -156,10 +193,10 @@ function App() {
           variant="contained"
           color="secondary"
           onClick={handleFileUpload}
-          disabled={loading}
+          disabled={loading || isUploaded || pdfFiles.length === 0} // Disable if uploading or already uploaded
           fullWidth
         >
-          {loading ? <CircularProgress size={24} /> : "Upload PDF"}
+          {loading ? <CircularProgress size={24} /> : "Upload PDFs"}
         </Button>
       </StyledPaper>
 
@@ -177,7 +214,7 @@ function App() {
           variant="contained"
           color="primary"
           onClick={handleQuerySubmit}
-          disabled={loading1}
+          disabled={loading1 || !isUploaded} // Disable if not uploaded
           fullWidth
         >
           {loading1 ? <CircularProgress size={24} /> : "Ask"}
@@ -209,4 +246,5 @@ function App() {
     </StyledContainer>
   );
 }
+
 export default App;
